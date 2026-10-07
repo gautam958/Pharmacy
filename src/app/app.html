@@ -1,0 +1,27 @@
+<mat-toolbar color="primary" class="toolbar">
+  <a routerLink="/medicines" class="logo">
+    <mat-icon>local_pharmacy</mat-icon>
+    ABC Pharmacy
+  </a>
+
+  <span class="spacer"></span>
+
+  <!-- normal menu on desktop -->
+  <nav class="desktop-menu">
+    <a mat-button routerLink="/medicines" routerLinkActive="active">Medicines</a>
+    <a mat-button routerLink="/sales" routerLinkActive="active">Sales</a>
+  </nav>
+
+  <!-- hamburger menu on small screens -->
+  <button mat-icon-button class="mobile-menu" [matMenuTriggerFor]="menu" aria-label="Menu">
+    <mat-icon>menu</mat-icon>
+  </button>
+  <mat-menu #menu="matMenu">
+    <a mat-menu-item routerLink="/medicines">Medicines</a>
+    <a mat-menu-item routerLink="/sales">Sales</a>
+  </mat-menu>
+</mat-toolbar>
+
+<main class="container">
+  <router-outlet />
+</main>

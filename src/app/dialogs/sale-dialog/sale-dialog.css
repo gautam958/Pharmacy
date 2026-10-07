@@ -1,0 +1,38 @@
+.full {
+  width: 100%;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+}
+
+.selected {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 16px;
+  background: #eef6f6;
+  border-radius: 6px;
+}
+
+.info {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #555;
+}
+
+.qty-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.total {
+  font-size: 16px;
+  font-weight: 500;
+}

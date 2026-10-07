@@ -1,0 +1,49 @@
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #0d7377;
+  color: #fff;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.desktop-menu a {
+  color: #d6eeee;
+}
+
+.desktop-menu a.active {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.mobile-menu {
+  display: none;
+  color: #fff;
+}
+
+@media (max-width: 600px) {
+  .desktop-menu {
+    display: none;
+  }
+
+  .mobile-menu {
+    display: inline-flex;
+  }
+
+  .logo {
+    font-size: 17px;
+  }
+}

@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
   // set this to the deployed api url before building for production
-  apiUrl: 'http://localhost:5207/api'
+  apiUrl: 'https://pharmacy-ewfxhegafmhwh5an.centralindia-01.azurewebsites.net/api'
 };

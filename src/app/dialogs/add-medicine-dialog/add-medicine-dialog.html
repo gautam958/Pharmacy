@@ -1,4 +1,10 @@
-<h2 mat-dialog-title>Add Medicine</h2>
+<div mat-dialog-title class="dialog-head">
+  <div class="stat-icon teal"><mat-icon>medication</mat-icon></div>
+  <div>
+    <h2>Add Medicine</h2>
+    <p>Enter the details of the new batch.</p>
+  </div>
+</div>
 
 <form [formGroup]="form" (ngSubmit)="save()" novalidate>
   <mat-dialog-content>

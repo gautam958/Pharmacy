@@ -1,49 +1,129 @@
-.toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  background: #0d7377;
-  color: #fff;
+.layout {
+  height: 100vh;
+  background: var(--app-bg);
 }
 
-.logo {
+.sidebar {
+  width: 248px;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 14px;
+  background: var(--app-surface);
+  border-right: 1px solid var(--app-border) !important;
+}
+
+.sidebar ::ng-deep .mat-drawer-inner-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #fff;
-  font-size: 20px;
-  font-weight: 500;
-  text-decoration: none;
+  gap: 12px;
+  padding: 4px 8px 24px;
 }
 
-.spacer {
+.brand-logo {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: linear-gradient(135deg, #14b8a6, #0f766e);
+  box-shadow: 0 6px 14px rgba(15, 118, 110, 0.3);
+}
+
+.brand-name {
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--app-ink);
+}
+
+.brand-sub {
+  font-size: 12px;
+  color: var(--app-muted);
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   flex: 1;
 }
 
-.desktop-menu a {
-  color: #d6eeee;
+.nav-title {
+  padding: 0 12px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--app-muted);
 }
 
-.desktop-menu a.active {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.15);
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  color: var(--app-ink-2);
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
 }
 
-.mobile-menu {
-  display: none;
-  color: #fff;
+.nav-item mat-icon {
+  color: var(--app-muted);
 }
 
-@media (max-width: 600px) {
-  .desktop-menu {
-    display: none;
-  }
+.nav-item:hover {
+  background: var(--app-hover);
+}
 
-  .mobile-menu {
-    display: inline-flex;
-  }
+.nav-item.active {
+  color: var(--app-primary);
+  background: var(--app-primary-soft);
+}
 
-  .logo {
-    font-size: 17px;
+.nav-item.active mat-icon {
+  color: var(--app-primary);
+}
+
+.sidebar-footer {
+  padding: 12px;
+  font-size: 12px;
+  color: var(--app-muted);
+}
+
+.content {
+  background: var(--app-bg);
+}
+
+.mobile-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  gap: 4px;
+  background: var(--app-surface);
+  border-bottom: 1px solid var(--app-border);
+}
+
+.mobile-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--app-ink);
+}
+
+.page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px 32px 48px;
+}
+
+@media (max-width: 959px) {
+  .page {
+    padding: 18px 14px 32px;
   }
 }

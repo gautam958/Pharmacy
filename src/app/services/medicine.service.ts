@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
-import { AddMedicine, Medicine, MedicineDetails, PagedResult } from '../models/medicine';
+import { AddMedicine, Medicine, MedicineDetails, MedicineSummary, PagedResult } from '../models/medicine';
 
 export interface MedicineFilter {
   search: string;
@@ -28,6 +28,10 @@ export class MedicineService {
       .set('pageSize', f.pageSize);
 
     return this.http.get<PagedResult<Medicine>>(this.url, { params });
+  }
+
+  getSummary(): Observable<MedicineSummary> {
+    return this.http.get<MedicineSummary>(`${this.url}/summary`);
   }
 
   getMedicine(id: number): Observable<MedicineDetails> {

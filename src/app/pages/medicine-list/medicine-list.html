@@ -1,44 +1,89 @@
-<div class="page-title">
-  <h1>Medicines</h1>
-  <button mat-flat-button (click)="openAddMedicine()">
+<div class="page-header">
+  <div>
+    <h1>Medicines</h1>
+    <p>Track stock, expiry dates and prices of all medicines.</p>
+  </div>
+  <button mat-flat-button class="primary-btn" (click)="openAddMedicine()">
     <mat-icon>add</mat-icon>
     Add Medicine
   </button>
 </div>
 
-<div class="toolbar">
-  <mat-form-field class="search" subscriptSizing="dynamic">
-    <mat-label>Search by medicine name</mat-label>
-    <mat-icon matPrefix>search</mat-icon>
-    <input matInput (input)="onSearch($any($event.target).value)" />
-  </mat-form-field>
+<div class="stats">
+  <button class="stat" [class.selected]="filter === 'all'" (click)="onFilterChange('all')">
+    <div class="stat-icon teal"><mat-icon>inventory_2</mat-icon></div>
+    <div>
+      <div class="stat-label">Total medicines</div>
+      <div class="stat-value">{{ summary()?.totalMedicines ?? '-' }}</div>
+      <div class="stat-note">{{ summary()?.totalUnits ?? 0 }} units in stock</div>
+    </div>
+  </button>
 
-  <mat-button-toggle-group [value]="filter" (change)="onFilterChange($event.value)" hideSingleSelectionIndicator>
-    <mat-button-toggle value="all">All</mat-button-toggle>
-    <mat-button-toggle value="expiring">Expiring in 30 days</mat-button-toggle>
-    <mat-button-toggle value="lowstock">Low stock</mat-button-toggle>
-  </mat-button-toggle-group>
+  <button class="stat" [class.selected]="filter === 'expiring'" (click)="onFilterChange('expiring')">
+    <div class="stat-icon red"><mat-icon>event_busy</mat-icon></div>
+    <div>
+      <div class="stat-label">Expiring in 30 days</div>
+      <div class="stat-value">{{ summary()?.expiringSoon ?? '-' }}</div>
+      <div class="stat-note">{{ summary()?.expired ?? 0 }} already expired</div>
+    </div>
+  </button>
+
+  <button class="stat" [class.selected]="filter === 'lowstock'" (click)="onFilterChange('lowstock')">
+    <div class="stat-icon amber"><mat-icon>trending_down</mat-icon></div>
+    <div>
+      <div class="stat-label">Low stock</div>
+      <div class="stat-value">{{ summary()?.lowStock ?? '-' }}</div>
+      <div class="stat-note">less than 10 units</div>
+    </div>
+  </button>
+
+  <div class="stat">
+    <div class="stat-icon green"><mat-icon>account_balance_wallet</mat-icon></div>
+    <div>
+      <div class="stat-label">Stock value</div>
+      <div class="stat-value">{{ (summary()?.stockValue ?? 0) | currency: 'INR' : 'symbol' : '1.0-0' }}</div>
+      <div class="stat-note">at current prices</div>
+    </div>
+  </div>
 </div>
 
-<p class="legend">
-  <span class="box red"></span> Expires in less than 30 days
-  <span class="box yellow"></span> Less than 10 in stock
-</p>
-
 @if (error()) {
-  <p class="error">{{ error() }}</p>
+  <p class="error"><mat-icon>error_outline</mat-icon> {{ error() }}</p>
 }
 
-<div class="table-card">
+<div class="card">
+  <div class="card-toolbar">
+    <mat-form-field class="search" subscriptSizing="dynamic">
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput placeholder="Search by medicine name" (input)="onSearch($any($event.target).value)" />
+    </mat-form-field>
+
+    <mat-button-toggle-group class="filters" [value]="filter" (change)="onFilterChange($event.value)" hideSingleSelectionIndicator>
+      <mat-button-toggle value="all">All</mat-button-toggle>
+      <mat-button-toggle value="expiring">Expiring</mat-button-toggle>
+      <mat-button-toggle value="lowstock">Low stock</mat-button-toggle>
+    </mat-button-toggle-group>
+
+    <div class="legend">
+      <span><i class="dot red"></i> Expires in &lt; 30 days</span>
+      <span><i class="dot amber"></i> Less than 10 in stock</span>
+    </div>
+  </div>
+
   @if (loading()) {
-    <div class="loading-overlay"><mat-spinner diameter="44" /></div>
+    <div class="loading-overlay"><mat-spinner diameter="42" /></div>
   }
 
   <div class="table-scroll">
     <table mat-table [dataSource]="medicines()" matSort matSortActive="fullName" matSortDirection="asc" (matSortChange)="onSortChange($event)">
       <ng-container matColumnDef="fullName">
-        <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
-        <td mat-cell *matCellDef="let m">{{ m.fullName }}</td>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>Medicine</th>
+        <td mat-cell *matCellDef="let m">
+          <div class="name-cell">
+            <span class="med-icon"><mat-icon>{{ medicineIcon(m) }}</mat-icon></span>
+            <span class="med-name">{{ m.fullName }}</span>
+          </div>
+        </td>
       </ng-container>
 
       <ng-container matColumnDef="brand">
@@ -49,16 +94,14 @@
       <ng-container matColumnDef="expiryDate">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>Expiry Date</th>
         <td mat-cell *matCellDef="let m">
-          {{ m.expiryDate | date: 'dd MMM yyyy' }}
-          @if (m.isExpired) {
-            <span class="tag">Expired</span>
-          }
+          <div>{{ m.expiryDate | date: 'dd MMM yyyy' }}</div>
+          <div class="sub" [class.sub-red]="m.isExpiringSoon">{{ expiryText(m) }}</div>
         </td>
       </ng-container>
 
       <ng-container matColumnDef="quantity">
         <th mat-header-cell *matHeaderCellDef mat-sort-header>Quantity</th>
-        <td mat-cell *matCellDef="let m">{{ m.quantity }}</td>
+        <td mat-cell *matCellDef="let m"><strong>{{ m.quantity }}</strong></td>
       </ng-container>
 
       <ng-container matColumnDef="price">
@@ -66,17 +109,49 @@
         <td mat-cell *matCellDef="let m">{{ m.price | currency: 'INR' }}</td>
       </ng-container>
 
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let m" class="actions">
-          <button mat-stroked-button (click)="openSale(m)" [disabled]="!canSell(m)">Sell</button>
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let m">
+          <div class="chips">
+            @if (m.isExpired) {
+              <span class="chip red">Expired</span>
+            } @else if (m.isExpiringSoon) {
+              <span class="chip red">Expiring soon</span>
+            }
+            @if (m.quantity === 0) {
+              <span class="chip amber">Out of stock</span>
+            } @else if (m.isLowStock) {
+              <span class="chip amber">Low stock</span>
+            }
+            @if (!m.isExpiringSoon && !m.isLowStock) {
+              <span class="chip green">In stock</span>
+            }
+          </div>
         </td>
       </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="columns"></tr>
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let m" class="actions">
+          <button mat-flat-button class="sell-btn" (click)="openSale(m)" [disabled]="!canSell(m)">
+            <mat-icon>shopping_cart</mat-icon>
+            Sell
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columns; sticky: true"></tr>
       <tr mat-row *matRowDef="let m; columns: columns" [class]="rowClass(m)"></tr>
       <tr class="mat-row" *matNoDataRow>
-        <td class="mat-cell empty" [attr.colspan]="columns.length">{{ loading() ? '' : 'No medicines found.' }}</td>
+        <td class="mat-cell" [attr.colspan]="columns.length">
+          @if (!loading()) {
+            <div class="empty-state">
+              <mat-icon>search_off</mat-icon>
+              <h3>No medicines found</h3>
+              <div>Try another name or clear the filter.</div>
+            </div>
+          }
+        </td>
       </tr>
     </table>
   </div>

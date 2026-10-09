@@ -35,3 +35,12 @@ export interface PagedResult<T> {
   page: number;
   pageSize: number;
 }
+
+export interface MedicineSummary {
+  totalMedicines: number;
+  totalUnits: number;
+  expiringSoon: number;
+  expired: number;
+  lowStock: number;
+  stockValue: number;
+}

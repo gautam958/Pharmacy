@@ -1,179 +1,167 @@
-ABC PHARMACY  CORE LOGIC AND USER GUIDE
-=========================================
+# ABC Pharmacy
 
+A small web app for ABC Pharmacy to keep track of medicines and their sales. There is a .NET Core Web API for the backend and an Angular single page application for the frontend. All data is stored in JSON files on the server.
 
-1. WHAT THE APPLICATION DOES
-----------------------------
-ABC Pharmacy keeps track of the medicines in stock and the sales made from that stock.
+## Features
 
-   Backend : .NET 10 Web API (backend/AbcPharmacy.Api)
-   Frontend: Angular 22 with Angular Material (frontend)
-   Storage : two JSON files on the server, medicines.json and sales.json
+- List of medicines in a grid showing Name, Brand, Expiry Date, Quantity and Price. Notes are not shown in the grid.
+- Row colours:
+  - **Red** when the expiry date is less than 30 days away (expired medicines are red too).
+  - **Yellow** when there are less than 10 units in stock.
+  - If both apply, the row is shown in red.
+- Search medicines by name.
+- Filter by "Expiring in 30 days" or "Low stock", and sort by any column.
+- Paging with 10, 50, 100, 200 or 500 rows per page.
+- Add a new medicine in a popup. All fields are validated, and the price can have at most 2 decimal places.
+- Add a sale in a popup, either with the "Sell" button on a medicine row or with "Add Sale" on the Sales page (search the medicine there). The sold quantity is taken out of the stock, and the sale is saved in the sales history.
+- Dashboard cards on both pages: total medicines, expiring in 30 days, low stock and stock value on Medicines; sales and revenue (today and all time) on Sales. The expiring and low stock cards also work as filters.
+- Status tags in the grid (Expiring soon, Expired, Low stock, Out of stock, In stock) and the days left until expiry.
+- Built with Angular Material (Inter font, rounded icons) and works on mobile. There is a sidebar menu on desktop; on small screens it opens from the menu button and the tables scroll sideways.
+- A spinner shows while data is loading or being saved.
+- On the first run the API creates 1000 sample medicines and 250 sample sales, so the screens are not empty.
 
+## Technology
 
-2. CORE LOGIC
--------------
+| Part | Used |
+|------|------|
+| Backend | .NET 10, ASP.NET Core Web API (controllers) |
+| Frontend | Angular 22, Angular Material, TypeScript |
+| Storage | JSON files (`medicines.json`, `sales.json`) |
 
-2.1 Medicine data
-    Every medicine has:
-      Full Name, Brand, Expiry Date, Quantity, Price (2 decimals), Notes
+## Project structure
 
-    The same medicine with a different expiry date is treated as a separate
-    batch. Name + Brand + Expiry Date must be unique.
+```
+abc-pharmacy/
+├── backend/
+│   ├── AbcPharmacy.sln
+│   ├── Dockerfile
+│   └── AbcPharmacy.Api/
+│       ├── Controllers/     MedicinesController, SalesController
+│       ├── Services/        MedicineService, SaleService (business logic)
+│       ├── Data/            JsonDataStore (reads/writes the json files), SeedData
+│       ├── Models/          Medicine, Sale, request and response classes
+│       ├── Validation/      MaxDecimalPlaces attribute
+│       ├── Program.cs
+│       └── appsettings.json
+├── frontend/
+│   ├── Dockerfile, nginx.conf
+│   └── src/app/
+│       ├── models/          Medicine, Sale interfaces
+│       ├── services/        MedicineService, SaleService (calls the API)
+│       ├── pages/
+│       │   ├── medicine-list/   summary cards, grid, search, filters, sorting, paging
+│       │   └── sales/           summary cards, sales history
+│       └── dialogs/
+│           ├── add-medicine-dialog/   popup to add a medicine
+│           └── sale-dialog/           popup to record a sale
+├── k8s/                     Kubernetes manifests for AKS
+└── AKS-DEPLOYMENT.md        how to deploy to Azure Kubernetes Service
+```
 
-2.2 Where the data is stored
-     JsonDataStore (backend/AbcPharmacy.Api/Data) is a singleton.
-     On startup it reads App_Data/medicines.json and App_Data/sales.json into
-      memory.
-     If the files don't exist (first run), it creates 1000 sample medicines
-      and 250 sample sales.
-     Every read and write goes through one lock. After every change both files
-      are saved again.
-     Saving writes a .tmp file first and then replaces the real file, so a
-      crash during saving cannot corrupt the data.
+## Core logic
 
-2.3 Colour rules in the grid
-    The API calculates these flags for each medicine (MedicineService.ToDto):
+### Storing the data
 
-      IsExpiringSoon = expiry date is earlier than today + 30 days
-                       (this includes medicines that are already expired)
-      IsLowStock     = quantity is less than 10
-      IsExpired      = expiry date is earlier than today
+`JsonDataStore` is registered as a singleton.
 
-    The grid uses the flags to colour the rows:
+- When the API starts, it reads `App_Data/medicines.json` and `App_Data/sales.json` into memory. If the files don't exist yet, it creates the sample data first.
+- Every read and write goes through one `lock`, and after every change both files are saved again.
+- A file is first written to a `.tmp` file and then moved over the old one, so a crash in the middle of saving doesn't leave a broken file.
 
-      RED    background -> IsExpiringSoon
-      YELLOW background -> IsLowStock
-      If both are true, the row is RED.
+### Expiring soon and low stock
 
-    The 30 days and 10 units come from appsettings.json:
+The API works out these flags for every medicine it returns, so the Angular app doesn't have to calculate them itself:
 
-      "Inventory": { "ExpiryWarningDays": 30, "LowStockThreshold": 10 }
+- `IsExpiringSoon`: the expiry date is earlier than today + 30 days.
+- `IsLowStock`: the quantity is less than 10.
+- `IsExpired`: the expiry date is earlier than today.
 
-2.4 Adding a medicine
-    Validation:
-       Full Name : required, max 200 characters
-       Brand     : required, max 100 characters
-       Expiry    : required, cannot be in the past
-       Quantity  : required, whole number from 0 to 100000
-       Price     : required, 0.01 to 1000000, max 2 decimal places
-                    (MaxDecimalPlaces attribute)
-       Notes     : optional, max 1000 characters
+Both limits come from `appsettings.json`:
 
-    If the same Name + Brand + Expiry already exists, the API returns 400 with
-    a message.
+```json
+"Inventory": {
+  "ExpiryWarningDays": 30,
+  "LowStockThreshold": 10
+}
+```
 
-2.5 Recording a sale (SaleService.AddSale)
-    Everything below runs inside the same lock, so two people selling at the
-    same time can never sell more than what is in stock.
+The grid uses these flags to set the row colour.
 
-      1. Find the medicine. If it is not found, the API returns 404.
-      2. If the medicine is expired, the API returns 400 ("... is expired and
-         cannot be sold").
-      3. If the quantity asked for is more than the stock, the API returns 400
-         ("Only X left in stock ...").
-      4. Reduce the medicine quantity.
-      5. Save a sale record with the medicine name, unit price, quantity, total
-         and date. The name and price are copied, so the history stays the same
-         even if the medicine changes later.
+### Adding a medicine
 
-2.6 Search, filter, sort and paging
-    GET /api/medicines supports:
-      search    part of the medicine name, not case sensitive
-      filter    all | expiring | lowstock
-      sortBy    fullName | brand | expiryDate | quantity | price
-      sortDir   asc | desc
-      page      page number, starting at 1
-      pageSize  1 to 500
+The request is validated with data annotations. A medicine with the same name, brand and expiry date already exists as the same batch, so it is rejected. The same medicine with a different expiry date is allowed.
 
-    All of this is done on the server, so only the current page is sent to the
-    browser.
+### Recording a sale
 
+1. Find the medicine. If it isn't found, the API returns 404.
+2. Check that it is not expired, and that enough stock is left. If either check fails, the API returns 400 with a message.
+3. Reduce the stock and add a sale record. The medicine name and price are copied into the sale, so the history stays correct later.
 
-3. HOW TO RUN
--------------
+All of this happens inside the same lock, so two sales at the same time can't sell more than what is in stock.
 
-Prerequisites
-   .NET SDK 10
-   Node.js 24 (or 22.22.3 and later). Check with: node -v
+## API endpoints
 
-Step 1  Start the API (terminal 1)
-    cd backend/AbcPharmacy.Api
-    dotnet run
+| Method | URL | Description |
+|--------|-----|-------------|
+| GET | `/api/medicines?search=&filter=&sortBy=&sortDir=&page=&pageSize=` | List medicines. `filter` is `all`, `expiring` or `lowstock`. `pageSize` can be up to 500 |
+| GET | `/api/medicines/{id}` | One medicine, including its notes |
+| POST | `/api/medicines` | Add a medicine |
+| GET | `/api/medicines/summary` | Counts for the dashboard cards (total, expiring, expired, low stock, stock value) |
+| GET | `/api/sales?page=&pageSize=` | Sales history, newest first |
+| GET | `/api/sales/summary` | Sales count and revenue, today and all time |
+| POST | `/api/sales` | Record a sale: `{ "medicineId": 1, "quantity": 2 }` |
+| GET | `/health` | Health check, used by the Kubernetes probes |
 
-    The API runs on http://localhost:5207.
-    Test it in the browser: http://localhost:5207/api/medicines
+Sample requests are in `backend/AbcPharmacy.Api/AbcPharmacy.Api.http`. You can run them from Visual Studio, Rider, or the VS Code REST Client extension.
 
-Step 2  Start the frontend (terminal 2)
-    cd frontend
-    npm install
-    npm start
+## How to run
 
-    Open http://localhost:4200 in the browser.
+### Prerequisites
 
-Settings worth knowing
-   Frontend API url : frontend/src/environments/environment.development.ts
-   Allowed origins  : "AllowedOrigins" in backend/AbcPharmacy.Api/appsettings.json
-    (must contain http://localhost:4200)
-   Reset the data   : stop the API, delete backend/AbcPharmacy.Api/App_Data,
-    then start the API again. The sample data is created again.
+- .NET SDK 10
+- Node.js 24 (or 22.22.3 and later). Angular CLI 22 does not work on older Node versions.
 
+### Backend
 
-4. HOW TO USE THE APPLICATION
------------------------------
-The top menu has two items: Medicines and Sales.
-On a phone the menu becomes the button in the top right corner.
+```bash
+cd backend/AbcPharmacy.Api
+dotnet run
+```
 
-4.1 Medicines page
-     The grid shows Name, Brand, Expiry Date, Quantity and Price.
-     Row colours:
-        red    = expires in less than 30 days (or already expired, also marked
-                 with an "Expired" tag)
-        yellow = less than 10 in stock
-     Search : type in "Search by medicine name". The list updates when you
-               stop typing.
-     Filter : use the All / Expiring in 30 days / Low stock buttons.
-     Sort   : click a column header. Click again to reverse the order.
-     Paging : use the arrows at the bottom of the grid. "Items per page" lets
-               you choose 10, 50, 100, 200 or 500 rows.
+- The API runs on `http://localhost:5207`. Try http://localhost:5207/api/medicines in the browser to check it.
+- The json files are created in `backend/AbcPharmacy.Api/App_Data`. To start again with fresh sample data, stop the API and delete that folder.
 
-4.2 Add a medicine
-    1. Click "Add Medicine" on the Medicines page.
-    2. Fill in the form in the popup. Fields with errors are shown in red.
-    3. Click Save. The popup closes, a message appears at the bottom and the
-       list refreshes.
+### Frontend
 
-4.3 Sell a medicine from the list
-    1. Click "Sell" on a row. The button is disabled for expired or
-       out-of-stock medicines.
-    2. The popup shows the medicine, the stock left and the price.
-    3. Enter the quantity. The total is shown next to it.
-    4. Click "Save Sale". The stock in the grid is updated.
+Open a second terminal:
 
-4.4 Sales page
-     Shows all sales, newest first, with paging (10/50/100/200/500).
-     "Add Sale" opens the same popup. Type at least 2 letters of the medicine
-      name, pick it from the list, enter the quantity and click "Save Sale".
+```bash
+cd frontend
+npm install
+npm start
+```
 
-4.5 Messages you may see
-    "Only X left in stock for ..."            -> lower the quantity
-    "... is expired and cannot be sold."      -> the medicine is expired
-    "... with this expiry date already exists" -> that batch is already added
-    "Could not connect to the server ..."     -> the API is not running
+Open http://localhost:4200.
 
+### Connecting the frontend and backend
 
-5. API QUICK REFERENCE
-----------------------
-GET  /api/medicines?search=&filter=&sortBy=&sortDir=&page=&pageSize=
-GET  /api/medicines/{id}
-POST /api/medicines
-     { "fullName": "Cetirizine Tablets", "brand": "Cipla",
-       "expiryDate": "2027-06-30", "quantity": 50, "price": 24.50,
-       "notes": "Store in a cool and dry place" }
-GET  /api/sales?page=&pageSize=
-POST /api/sales
-     { "medicineId": 1, "quantity": 2 }
+- The frontend reads the API url from `src/environments/environment.development.ts` (`http://localhost:5207/api`). If you change the API port, change it there as well.
+- The API allows calls from `http://localhost:4200` (`AllowedOrigins` in `appsettings.json`). If the frontend runs on another url, add it to that list.
 
-Sample requests are in backend/AbcPharmacy.Api/AbcPharmacy.Api.http.
+### Production build
 
+```bash
+cd frontend
+npm run build      # output in dist/abc-pharmacy-ui
+```
 
+Before building for production, set the real API url in `src/environments/environment.ts`.
+
+```bash
+cd backend/AbcPharmacy.Api
+dotnet publish -c Release -o ../publish
+```
+
+### Docker and AKS
+
+Both apps have a `Dockerfile`. The frontend image is built with `--configuration aks`, so it calls the API on `/api` of the same host. On AKS, an ingress sends `/api` to the API and everything else to the web app. The full steps are in [AKS-DEPLOYMENT.md](AKS-DEPLOYMENT.md).

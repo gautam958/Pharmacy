@@ -1,4 +1,10 @@
-<h2 mat-dialog-title>Add Sale</h2>
+<div mat-dialog-title class="dialog-head">
+  <div class="stat-icon green"><mat-icon>shopping_cart</mat-icon></div>
+  <div>
+    <h2>Add Sale</h2>
+    <p>The sold quantity is taken out of the stock.</p>
+  </div>
+</div>
 
 <form (ngSubmit)="save()">
   <mat-dialog-content>

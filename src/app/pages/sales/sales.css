@@ -1,0 +1,62 @@
+.card-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.count {
+  margin-left: auto;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--app-muted);
+  background: var(--app-hover);
+}
+
+.name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.med-icon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--app-blue);
+  background: var(--app-blue-bg);
+}
+
+.med-icon mat-icon {
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.med-name {
+  font-weight: 600;
+  color: var(--app-ink);
+}
+
+.sub {
+  font-size: 12px;
+  color: var(--app-muted);
+}
+
+.qty {
+  display: inline-block;
+  min-width: 32px;
+  padding: 2px 8px;
+  border-radius: 8px;
+  text-align: center;
+  font-weight: 600;
+  background: var(--app-hover);
+}
+
+.total {
+  color: var(--app-green);
+}

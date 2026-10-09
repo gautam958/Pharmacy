@@ -13,7 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Medicine } from '../../models/medicine';
+import { Medicine, MedicineSummary } from '../../models/medicine';
 import { MedicineService } from '../../services/medicine.service';
 import { getErrorMessage } from '../../services/error-message';
 import { AddMedicineDialog } from '../../dialogs/add-medicine-dialog/add-medicine-dialog';
@@ -44,9 +44,10 @@ export class MedicineList implements OnInit, OnDestroy {
   private searchText$ = new Subject<string>();
   private searchSub?: Subscription;
 
-  columns = ['fullName', 'brand', 'expiryDate', 'quantity', 'price', 'actions'];
+  columns = ['fullName', 'brand', 'expiryDate', 'quantity', 'price', 'status', 'actions'];
   pageSizes = [10, 50, 100, 200, 500];
 
+  summary = signal<MedicineSummary | null>(null);
   medicines = signal<Medicine[]>([]);
   totalCount = signal(0);
   loading = signal(false);
@@ -70,6 +71,7 @@ export class MedicineList implements OnInit, OnDestroy {
       });
 
     this.loadMedicines();
+    this.loadSummary();
   }
 
   ngOnDestroy(): void {
@@ -100,6 +102,13 @@ export class MedicineList implements OnInit, OnDestroy {
           this.loading.set(false);
         }
       });
+  }
+
+  loadSummary(): void {
+    this.medicineService.getSummary().subscribe({
+      next: summary => this.summary.set(summary),
+      error: () => this.summary.set(null)
+    });
   }
 
   onSearch(text: string): void {
@@ -140,6 +149,40 @@ export class MedicineList implements OnInit, OnDestroy {
     return !m.isExpired && m.quantity > 0;
   }
 
+  daysLeft(m: Medicine): number {
+    const [y, mo, d] = m.expiryDate.split('-').map(Number);
+    const expiry = new Date(y, mo - 1, d);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return Math.round((expiry.getTime() - today.getTime()) / 86400000);
+  }
+
+  expiryText(m: Medicine): string {
+    const days = this.daysLeft(m);
+    if (days < 0) {
+      return `Expired ${-days} day${days === -1 ? '' : 's'} ago`;
+    }
+    if (days === 0) {
+      return 'Expires today';
+    }
+    return `In ${days} day${days === 1 ? '' : 's'}`;
+  }
+
+  // small icon in front of the name, based on the type of medicine
+  medicineIcon(m: Medicine): string {
+    const name = m.fullName.toLowerCase();
+    if (name.includes('syrup') || name.includes('suspension')) {
+      return 'water_drop';
+    }
+    if (name.includes('injection')) {
+      return 'vaccines';
+    }
+    if (name.includes('cream') || name.includes('gel') || name.includes('ointment')) {
+      return 'sanitizer';
+    }
+    return 'medication';
+  }
+
   openAddMedicine(): void {
     this.dialog
       .open(AddMedicineDialog, { width: '640px', maxWidth: '95vw' })
@@ -148,6 +191,7 @@ export class MedicineList implements OnInit, OnDestroy {
         if (medicine) {
           this.snackBar.open(`${medicine.fullName} added.`, 'OK', { duration: 3000 });
           this.loadMedicines();
+          this.loadSummary();
         }
       });
   }
@@ -160,6 +204,7 @@ export class MedicineList implements OnInit, OnDestroy {
         if (sale) {
           this.snackBar.open(`Sold ${sale.quantity} x ${sale.medicineName}.`, 'OK', { duration: 3000 });
           this.loadMedicines();
+          this.loadSummary();
         }
       });
   }

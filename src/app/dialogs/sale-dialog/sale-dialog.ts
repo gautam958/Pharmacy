@@ -6,6 +6,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { debounceTime, filter, switchMap } from 'rxjs';
@@ -31,6 +32,7 @@ export interface SaleDialogData {
     MatInputModule,
     MatButtonModule,
     MatAutocompleteModule,
+    MatIconModule,
     MatProgressSpinnerModule
   ],
   templateUrl: './sale-dialog.html',

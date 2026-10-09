@@ -3,7 +3,7 @@
   "version": 1,
   "cli": {
     "packageManager": "npm",
-    "analytics": "9a590193-fd52-43c1-bf6b-a8969cef578e"
+    "analytics": "fc6cbf37-17f3-450d-845c-35a3ee251adf"
   },
   "newProjectRoot": "projects",
   "projects": {
@@ -79,6 +79,27 @@
                 {
                   "replace": "src/environments/environment.ts",
                   "with": "src/environments/environment.development.ts"
+                }
+              ]
+            },
+            "aks": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "1MB",
+                  "maximumError": "2MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
+                }
+              ],
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.aks.ts"
                 }
               ]
             }

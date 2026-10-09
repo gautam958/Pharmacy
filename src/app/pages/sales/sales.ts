@@ -8,7 +8,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import { Sale } from '../../models/sale';
+import { Sale, SalesSummary } from '../../models/sale';
 import { SaleService } from '../../services/sale.service';
 import { getErrorMessage } from '../../services/error-message';
 import { SaleDialog } from '../../dialogs/sale-dialog/sale-dialog';
@@ -16,7 +16,8 @@ import { SaleDialog } from '../../dialogs/sale-dialog/sale-dialog';
 @Component({
   selector: 'app-sales',
   imports: [CurrencyPipe, DatePipe, MatTableModule, MatPaginatorModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule],
-  templateUrl: './sales.html'
+  templateUrl: './sales.html',
+  styleUrl: './sales.css'
 })
 export class SalesPage implements OnInit {
   private saleService = inject(SaleService);
@@ -26,6 +27,7 @@ export class SalesPage implements OnInit {
   columns = ['soldOn', 'medicineName', 'quantity', 'unitPrice', 'totalAmount'];
   pageSizes = [10, 50, 100, 200, 500];
 
+  summary = signal<SalesSummary | null>(null);
   sales = signal<Sale[]>([]);
   totalCount = signal(0);
   loading = signal(false);
@@ -36,6 +38,14 @@ export class SalesPage implements OnInit {
 
   ngOnInit(): void {
     this.loadSales();
+    this.loadSummary();
+  }
+
+  loadSummary(): void {
+    this.saleService.getSummary().subscribe({
+      next: summary => this.summary.set(summary),
+      error: () => this.summary.set(null)
+    });
   }
 
   loadSales(): void {
@@ -70,6 +80,7 @@ export class SalesPage implements OnInit {
           this.snackBar.open(`Sold ${sale.quantity} x ${sale.medicineName}.`, 'OK', { duration: 3000 });
           this.page = 1;
           this.loadSales();
+          this.loadSummary();
         }
       });
   }

@@ -5,6 +5,7 @@ import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MedicineService } from '../../services/medicine.service';
 import { MedicineDetails } from '../../models/medicine';
@@ -32,7 +33,7 @@ function notInPast(control: AbstractControl): ValidationErrors | null {
 
 @Component({
   selector: 'app-add-medicine-dialog',
-  imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatProgressSpinnerModule],
+  imports: [ReactiveFormsModule, MatDialogModule, MatFormFieldModule, MatInputModule, MatButtonModule, MatIconModule, MatProgressSpinnerModule],
   templateUrl: './add-medicine-dialog.html',
   styleUrl: './add-medicine-dialog.css'
 })

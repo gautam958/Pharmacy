@@ -13,16 +13,17 @@
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 12px;
-  margin-bottom: 16px;
-  background: #eef6f6;
-  border-radius: 6px;
+  padding: 14px 16px;
+  margin-bottom: 18px;
+  background: var(--app-primary-soft);
+  border: 1px solid #c7e9e4;
+  border-radius: 12px;
 }
 
 .info {
   margin-top: 4px;
   font-size: 13px;
-  color: #555;
+  color: var(--app-muted);
 }
 
 .qty-row {
@@ -33,6 +34,10 @@
 }
 
 .total {
+  padding: 8px 14px;
+  border-radius: 10px;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
+  color: var(--app-green);
+  background: var(--app-green-bg);
 }

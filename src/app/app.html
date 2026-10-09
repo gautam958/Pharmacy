@@ -1,27 +1,49 @@
-<mat-toolbar color="primary" class="toolbar">
-  <a routerLink="/medicines" class="logo">
-    <mat-icon>local_pharmacy</mat-icon>
-    ABC Pharmacy
-  </a>
+<mat-sidenav-container class="layout">
+  <mat-sidenav
+    #drawer
+    class="sidebar"
+    [mode]="isMobile() ? 'over' : 'side'"
+    [opened]="!isMobile()"
+    [fixedInViewport]="isMobile()"
+  >
+    <div class="brand">
+      <div class="brand-logo"><mat-icon>local_pharmacy</mat-icon></div>
+      <div>
+        <div class="brand-name">ABC Pharmacy</div>
+        <div class="brand-sub">Inventory &amp; Sales</div>
+      </div>
+    </div>
 
-  <span class="spacer"></span>
+    <nav class="nav">
+      <span class="nav-title">Menu</span>
+      @for (item of menu; track item.path) {
+        <a
+          class="nav-item"
+          [routerLink]="item.path"
+          routerLinkActive="active"
+          (click)="isMobile() && drawer.close()"
+        >
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
 
-  <!-- normal menu on desktop -->
-  <nav class="desktop-menu">
-    <a mat-button routerLink="/medicines" routerLinkActive="active">Medicines</a>
-    <a mat-button routerLink="/sales" routerLinkActive="active">Sales</a>
-  </nav>
+    <div class="sidebar-footer">&copy; {{ year }} ABC Pharmacy</div>
+  </mat-sidenav>
 
-  <!-- hamburger menu on small screens -->
-  <button mat-icon-button class="mobile-menu" [matMenuTriggerFor]="menu" aria-label="Menu">
-    <mat-icon>menu</mat-icon>
-  </button>
-  <mat-menu #menu="matMenu">
-    <a mat-menu-item routerLink="/medicines">Medicines</a>
-    <a mat-menu-item routerLink="/sales">Sales</a>
-  </mat-menu>
-</mat-toolbar>
+  <mat-sidenav-content class="content">
+    @if (isMobile()) {
+      <mat-toolbar class="mobile-bar">
+        <button mat-icon-button (click)="drawer.toggle()" aria-label="Open menu">
+          <mat-icon>menu</mat-icon>
+        </button>
+        <span class="mobile-title">ABC Pharmacy</span>
+      </mat-toolbar>
+    }
 
-<main class="container">
-  <router-outlet />
-</main>
+    <main class="page">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>
